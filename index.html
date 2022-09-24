@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>get geojson from gsi vector</title>
+<meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+<script src='https://api.tiles.mapbox.com/mapbox-gl-js/v1.13.2/mapbox-gl.js'></script>
+<link href='https://api.tiles.mapbox.com/mapbox-gl-js/v1.13.2/mapbox-gl.css' rel='stylesheet' />
+<style>
+body { margin:0; padding:0; }
+
+#wrap {
+  display: grid;
+  grid-template: 1fr 1fr 48px / 1fr 1fr;
+  gap: 4px;
+  height: 100vh;
+  width: 100vw;
+}
+
+#map {
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+  height: 100%;
+  width: 100%;
+}
+
+#optmap {
+  grid-column: 2 / 3;
+  grid-row: 1 / 2;
+  height: 100%;
+  width: 100%;
+}
+
+#map-data-panel {
+  grid-column: 1 / 2;
+  grid-row: 2 / 3;
+  padding: 8px;
+  overflow: auto;
+}
+
+#optmap-data-panel {
+  grid-column: 2 / 3;
+  grid-row: 2 / 3;
+  padding: 8px;
+  overflow: auto;
+}
+
+#title-A {
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+#title-B {
+  grid-column: 2 / 3;
+  grid-row: 1 / 2;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.map-title {
+  display: inline-block;
+  padding: 8px;
+  background-color: #FFFFFFAA;
+}
+
+.object-key {
+  color: #0000FF;
+  background-color: #EEEEFF;
+}
+
+.indent {
+
+  padding-left: 1em;
+}
+
+#control-panel {
+  grid-column: 1 / 3;
+  grid-row: 3 / 4;
+  padding: 4px;
+  background-color: #EEEEEE;
+}
+
+.button {
+  display: inline-block;
+  background-color: #DDDDDD;
+  border: solid #FFFFFF 2px;
+  border-radius: 4px;
+  margin: 4px;
+  padding: 2px;
+  cursor: pointer;
+}
+
+</style>
+</head>
+<body>
+
+<div id='wrap'>
+  <div id='map'></div>
+  <div id='optmap'></div>
+  <div id='map-data-panel'>
+    <div class="title">属性値</div>
+    <div id="map-selected-feature">---</div>
+    <div class="title">スタイル設定</div>
+    <div id="map-selected-style">---</div>
+  </div>  
+  <div id='optmap-data-panel'>
+    <div class="title">属性値</div>
+    <div id="optmap-selected-feature">---</div>
+    <div class="title">スタイル設定</div>
+    <div id="optmap-selected-style">---</div>
+  </div>
+  <div id="title-A"><div class="map-title">(a)</div></div>
+  <div id="title-B"><div class="map-title">(b)</div></div>
+  <div id="control-panel">
+    <div class="button" onclick="showTileBoundaries()">タイル境界</div>
+    <div class="button" onclick="showCollisionBoxes()">文字領域</div>
+    <div class="button" onclick="setDebugStyle()">簡易スタイル</div>
+    <div class="button" onclick="setNormalStyle()">サンプルスタイル</div>
+  </div>
+</div>
+
+<div id='overlay'></div>
+<div id='menu'></div>
+
+<script>
+
+
+/*************************************************/
+/* Mapbox 関係設定                               */
+/*************************************************/
+const map = new mapboxgl.Map({
+  container: 'map', // container id
+  hash: true, //add #position on URL
+  style: 'https://gsi-cyberjapan.github.io/gsivectortile-mapbox-gl-js/std_vertical.json', // stylesheet location
+  center: [139.7, 35.7], // starting position [lng, lat]
+  zoom: 10, // starting zoom
+  maxZoom: 17.99,
+  localIdeographFontFamily: ['MS Gothic', 'Hiragino Kaku Gothic Pro', 'sans-serif']
+});
+
+
+//map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
+map.addControl(new mapboxgl.ScaleControl() );
+
+
+const optmap = new mapboxgl.Map({
+  container: 'optmap', // container id
+  hash: true, //add #position on URL
+  style: 'https://gsi-cyberjapan.github.io/optimal_bvmap/style/std.json', // stylesheet location
+  center: [139.7, 35.7], // starting position [lng, lat]
+  zoom: 10, // starting zoom
+  maxZoom: 17.99,
+  localIdeographFontFamily: ['MS Gothic', 'Hiragino Kaku Gothic Pro', 'sans-serif']
+});
+
+optmap.addControl(new mapboxgl.ScaleControl() );
+
+
+/*************************************************/
+/* 開発モード                                    */
+/*************************************************/
+
+const showTileBoundaries = () => {
+  map.showTileBoundaries = !map.showTileBoundaries;
+  optmap.showTileBoundaries = !optmap.showTileBoundaries;
+}
+
+const showCollisionBoxes = () => {
+  map.showCollisionBoxes = !map.showCollisionBoxes;
+  optmap.showCollisionBoxes = !optmap.showCollisionBoxes;
+}
+
+/*************************************************/
+/* 連動                                          */
+/*************************************************/
+let activeMap;
+
+map.on('mouseover', () => {
+  activeMap = "map";
+  console.log("map: active");
+});
+
+optmap.on('mouseover', () => {
+  activeMap = "optmap";
+  console.log("optmap: active");
+});
+
+
+map.on('move', () => {
+  if(activeMap == "map"){
+    synchroMaps(map, optmap);
+  }
+});
+
+optmap.on('move', () => {
+  if(activeMap == "optmap"){
+    synchroMaps(optmap, map);
+  }
+});
+
+
+synchroMaps = (fromMap, toMap) => {
+  const c = fromMap.getCenter();
+  const z = fromMap.getZoom();
+  const b = fromMap.getBearing();
+  const p = fromMap.getPitch();
+  
+  toMap.easeTo({
+    center: c,
+    zoom: z,
+    bearing: b,
+    pitch: p, 
+    duration: 0
+  });  
+}
+
+
+/*************************************************/
+/* データ確認用                                  */
+/*************************************************/
+
+//クリック時の挙動
+map.on("click", (e) => {
+  const geojson = getFeatureInfo(map, e);
+  highlightFeature(geojson, "map");
+});
+
+optmap.on("click", (e) => {
+  const geojson = getFeatureInfo(optmap, e);
+  highlightFeature(geojson, "optmap");
+});
+
+const formatJson = (obj) => {
+
+  const txt = JSON.stringify(obj, null, 2);
+  
+  let res = "";
+  
+  txt.split("\n").forEach( line => {
+    
+    if(line.match("}")){
+      res += "</div>";
+    }
+    
+    if(line.match(/\".+\":/)){
+      res += "<br>" + "<span class='object-key'>" + line.replace(":", "</span>:");
+    }else{
+      res += line;
+    }
+    
+    if(line.match("{")){
+      res += "<div class='indent'>";
+    }
+    
+    
+  });
+  
+  return res;
+
+  //return JSON.stringify(obj, null, 4).replace(/\n/g, "<br>");
+}
+
+const getFeatureInfo = (mymap, e) => {
+
+  const geojson = {
+    "type": "FeatureCollection",
+    "features": []
+  };
+  
+  const sv = 3;
+  const bb = [
+    [e.point.x - sv, e.point.y - sv],
+    [e.point.x + sv, e.point.y + sv]
+  ];
+  const features = mymap.queryRenderedFeatures(bb);
+  
+  if(features.length > 0){
+    for(i in features){
+      const f = features[i];
+      if(!f.source.match("selected-feature")){
+        geojson.features.push(features[i]);
+        break;
+      }
+    }
+  }else{
+    //地物がなければ空のGeoJSONを返す
+    //表示している情報はそのままにする（`${mapContainer}-selected-feature`などは初期化しない）
+    return geojson;
+  }
+  
+  
+  let layerInfo;
+  
+  const mapStyle = mymap.getStyle();
+  mapStyle.layers.forEach( layer => {
+    if(layer.id == geojson.features[0].layer.id){
+      layerInfo = layer;
+    };
+  });
+  
+  console.log(layerInfo);
+  
+  const mapContainer = mymap._container.id;
+  
+  document.getElementById(`${mapContainer}-selected-feature`).innerHTML = "<code>" + formatJson(geojson.features[0].properties) + "</code>";
+  document.getElementById(`${mapContainer}-selected-style`).innerHTML = "<code>" + formatJson(layerInfo) + "</code>";
+  
+  return geojson;
+  
+}
+
+const highlightFeature = (geojson, mymapName) => {
+  map.getSource(`selected-feature-${mymapName}`).setData(geojson);
+  optmap.getSource(`selected-feature-${mymapName}`).setData(geojson);
+}
+
+
+//強調表示用のsourceとstyle layerを設定
+map.on("style.load", () => {
+  console.log("map: style.load event");
+  initialize(map);
+});
+
+optmap.on("style.load", () => {
+  console.log("optmap: style.load event");
+  initialize(optmap);
+});
+
+const initialize = (mymap) => {
+  
+  const set = [
+    {col: "#FF0000", id: "map"},
+    {col: "#00FFFF", id: "optmap"}
+  ];
+  
+  set.forEach( t => {
+  
+    const col = t.col;
+    const mapContainer = t.id;
+    
+    if(map.getSource(`selected-point-feature-${mapContainer}`)) return;
+    
+    mymap.addSource(`selected-feature-${mapContainer}`, {
+      type: "geojson",
+      data: {
+        "type": "FeatureCollection",
+        features: []
+      }
+    });
+    
+    mymap.addLayer({
+      id: `selected-point-feature-${mapContainer}`, 
+      type: "circle",
+      source: `selected-feature-${mapContainer}`,
+      filter: ["any",
+        ["==", ["geometry-type"], "Point"],
+        ["==", ["geometry-type"], "MultiPoint"]
+      ],
+      layout: {},
+      paint: {
+        "circle-opacity": 0.5,
+        "circle-radius": 8,
+        "circle-color": col
+      }
+    });
+
+    mymap.addLayer({
+      id: `selected-line-feature-${mapContainer}`, 
+      type: "line",
+      source: `selected-feature-${mapContainer}`,
+      filter: ["any",
+        ["==", ["geometry-type"], "LineString"],
+        ["==", ["geometry-type"], "MultiLineString"]
+      ],
+      layout: {},
+      paint: {
+        "line-opacity": 0.5,
+        "line-width": 8,
+        "line-color": col
+      }
+    });
+
+    mymap.addLayer({
+      id: `selected-fill-feature-${mapContainer}`, 
+      type: "fill",
+      source: `selected-feature-${mapContainer}`,
+      filter: ["any",
+        ["==", ["geometry-type"], "Polygon"],
+        ["==", ["geometry-type"], "MultiPolygon"]
+      ],
+      layout: {},
+      paint: {
+        "fill-opacity": 0.5,
+        "fill-color": col,
+        "fill-outline-color": "#FFFFFF"
+      }
+    });
+  
+  });
+  
+}
+
+/*************************************************/
+/* スタイル設定                                  */
+/*************************************************/
+
+
+const layerStyleTemp = (type) => {
+  const ob = {
+    "point": {
+      type: "circle",
+      source: "v",
+      filter: ["any",
+        ["==", ["geometry-type"], "Point"],
+        ["==", ["geometry-type"], "MultiPoint"]
+      ],
+      layout: {},
+      paint: {
+        "circle-opacity": 0.8,
+        "circle-radius": 4,
+        "circle-color": "#0000FF",
+        "circle-stroke-width": 1,
+        "circle-stroke-color": "#FFFFFF"
+      }
+    },
+    "line": {
+      type: "line",
+      source: "v",
+      filter: ["any",
+        ["==", ["geometry-type"], "LineString"],
+        ["==", ["geometry-type"], "MultiLineString"]
+      ],
+      layout: {},
+      paint: {
+        "line-width": 2,
+        "line-opacity": 0.8,
+        "line-color": "#0000FF"
+      }
+    },
+    "fill": {
+      type: "fill",
+      source: "v",
+      filter: ["any",
+        ["==", ["geometry-type"], "Polygon"],
+        ["==", ["geometry-type"], "MultiPolygon"]
+      ],
+      layout: {},
+      paint: {
+        "fill-opacity": 0.4,
+        "fill-color": "#0000FF",
+        "fill-outline-color": "#FFFFFF"
+      }
+    }
+  }
+  
+  return ob[type];
+  
+}
+
+
+const gsibvSourceLayerList = [
+  {'source-layer': "symbol", 'geometory-type': 'point'},
+  {'source-layer': "boundary", 'geometory-type': 'line'},
+  {'source-layer': "road", 'geometory-type': 'line'},
+  {'source-layer': "railway", 'geometory-type': 'line'},
+  {'source-layer': "searoute", 'geometory-type': 'line'},
+  {'source-layer': "coastline", 'geometory-type': 'line'},
+  {'source-layer': "river", 'geometory-type': 'line'},
+  {'source-layer': "lake", 'geometory-type': 'line'},
+  {'source-layer': "waterarea", 'geometory-type': 'fill'},
+  {'source-layer': "elevation", 'geometory-type': 'point'},
+  {'source-layer': "transp", 'geometory-type': 'point'},
+  {'source-layer': "contour", 'geometory-type': 'line' },
+  {'source-layer': "landforma", 'geometory-type': 'fill'},
+  {'source-layer': "structurea", 'geometory-type': 'fill'},
+  {'source-layer': "wstructurea", 'geometory-type': 'fill'},
+  {'source-layer': "wstructurea", 'geometory-type': 'line'},
+  {'source-layer': "building", 'geometory-type': 'fill'},
+  {'source-layer': "building", 'geometory-type': 'line'},
+  {'source-layer': "transl", 'geometory-type': 'line'},
+  {'source-layer': "structurel", 'geometory-type': 'line'},
+  {'source-layer': "landformp", 'geometory-type': 'point'},
+  {'source-layer': "landforml", 'geometory-type': 'line'},
+  {'source-layer': "label", 'geometory-type': 'point'}
+];
+
+const optbvSourceLayerList = [
+  {'source-layer': 'AdmArea', 'geometory-type': 'fill'},
+  {'source-layer': 'AdmBdry', 'geometory-type': 'line'},
+  {'source-layer': 'RdEdg', 'geometory-type': 'line'},
+  {'source-layer': 'RdCompt', 'geometory-type': 'line'},
+  {'source-layer': 'RdCL', 'geometory-type': 'line'},
+  {'source-layer': 'RailTrCL', 'geometory-type': 'line'},
+  {'source-layer': 'BldA', 'geometory-type': 'fill'},
+  {'source-layer': 'StrctLine', 'geometory-type': 'line'},
+  {'source-layer': 'StrctArea', 'geometory-type': 'fill'},
+  {'source-layer': 'WA', 'geometory-type': 'fill'},
+  {'source-layer': 'Cstline', 'geometory-type': 'line'},
+  {'source-layer': 'WL', 'geometory-type': 'line'},
+  {'source-layer': 'RvrCL', 'geometory-type': 'line'},
+  {'source-layer': 'WStrA', 'geometory-type': 'fill'},
+  {'source-layer': 'WStrL', 'geometory-type': 'line'},
+  {'source-layer': 'WRltLine', 'geometory-type': 'line'},
+  {'source-layer': 'SpcfArea', 'geometory-type': 'fill'},
+  {'source-layer': 'SpcfArea', 'geometory-type': 'line'},
+  {'source-layer': 'Cntr', 'geometory-type': 'line'},
+  {'source-layer': 'Isbt', 'geometory-type': 'line'},
+  {'source-layer': 'TpgphArea', 'geometory-type': 'fill'},
+  {'source-layer': 'TpgphLine', 'geometory-type': 'line'},
+  {'source-layer': 'RailCL', 'geometory-type': 'line'},
+  {'source-layer': 'PwrTrnsmL', 'geometory-type': 'line'},
+  
+  {'source-layer': 'Anno', 'geometory-type': 'point'},
+  {'source-layer': 'Anno', 'geometory-type': 'line'},
+];
+
+
+const createDebugStyle = (mymap, url, sourceLayerList) => {
+
+  const debugStyle = {
+    "version": 8,
+    "name": "gsimapvector",
+    "glyphs": "https://gsi-cyberjapan.github.io/optimal_bvmap/glyphs/{fontstack}/{range}.pbf",
+    "sprite": "https://gsi-cyberjapan.github.io/optimal_bvmap/sprite/std",
+    "sources": {
+      "v": {
+        "type": "vector","minzoom": 0,"maxzoom": 16,
+        "tiles": [ url ],
+        "attribution": ""
+      }
+    },
+    "layers": [
+    /*
+      {
+        "id": "background",
+        "type": "background",
+        "paint": {
+          "background-color": "#0000FF"
+        }
+      }
+    */
+    ]
+  };
+  
+  sourceLayerList.forEach( info => {
+    
+    const gt = info["geometory-type"];
+    const sl = info["source-layer"];
+    
+    const layer = layerStyleTemp(gt);
+    layer.id = "layer-" + Math.random() + Date.now();
+    layer["source-layer"] = info["source-layer"];
+    
+    debugStyle.layers.push(layer);
+    
+  });
+  
+  return debugStyle;
+  
+}
+
+const setDebugStyle = () => {
+  
+  map.setStyle( createDebugStyle(
+    map, "https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/{z}/{x}/{y}.pbf", gsibvSourceLayerList
+  ), {"diff": false});  
+  
+  optmap.setStyle( createDebugStyle(
+    optmap, "https://cyberjapandata.gsi.go.jp/xyz/optimal_bvmap-v1/{z}/{x}/{y}.pbf", optbvSourceLayerList
+  ), {"diff": false});
+  
+}
+
+const setNormalStyle = () => {
+  optmap.setStyle("https://gsi-cyberjapan.github.io/optimal_bvmap/style/std.json", {"diff": false});
+  map.setStyle("https://gsi-cyberjapan.github.io/gsivectortile-mapbox-gl-js/std.json", {"diff": false});
+}
+
+</script>
+ 
+</body>
+</html>
