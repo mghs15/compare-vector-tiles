@@ -17,28 +17,28 @@ body { margin:0; padding:0; }
   width: 100vw;
 }
 
-#map {
+#leftmap {
   grid-column: 1 / 2;
   grid-row: 1 / 2;
   height: 100%;
   width: 100%;
 }
 
-#optmap {
+#rightmap {
   grid-column: 2 / 3;
   grid-row: 1 / 2;
   height: 100%;
   width: 100%;
 }
 
-#map-data-panel {
+#leftmap-data-panel {
   grid-column: 1 / 2;
   grid-row: 2 / 3;
   padding: 8px;
   overflow: auto;
 }
 
-#optmap-data-panel {
+#rightmap-data-panel {
   grid-column: 2 / 3;
   grid-row: 2 / 3;
   padding: 8px;
@@ -57,6 +57,36 @@ body { margin:0; padding:0; }
   grid-row: 1 / 2;
   z-index: 9999;
   pointer-events: none;
+}
+
+#source-layer-select-panel {
+  display: grid;
+  grid-template: 1fr 48px / 1fr 1fr;
+  grid-column: 1 / 3;
+  grid-row: 2 / 3;
+  margin: 24px;
+  background-color: #EEEEEE;
+  border: solid #FFFFFF 4px;
+  border-radius: 8px;
+}
+
+
+#leftmap-column {
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+  overflow: auto;
+}
+
+#rightmap-column {
+  grid-column: 2 / 3;
+  grid-row: 1 / 2;
+  overflow: auto;
+}
+
+#apply-button-area {
+  grid-column: 1 / 3;
+  grid-row: 2 / 3;
+  text-align: center;
 }
 
 .map-title {
@@ -97,19 +127,19 @@ body { margin:0; padding:0; }
 <body>
 
 <div id='wrap'>
-  <div id='map'></div>
-  <div id='optmap'></div>
-  <div id='map-data-panel'>
+  <div id='leftmap'></div>
+  <div id='rightmap'></div>
+  <div id='leftmap-data-panel'>
     <div class="title">属性値</div>
-    <div id="map-selected-feature">---</div>
+    <div id="leftmap-selected-feature">---</div>
     <div class="title">スタイル設定</div>
-    <div id="map-selected-style">---</div>
+    <div id="leftmap-selected-style">---</div>
   </div>  
-  <div id='optmap-data-panel'>
+  <div id='rightmap-data-panel'>
     <div class="title">属性値</div>
-    <div id="optmap-selected-feature">---</div>
+    <div id="rightmap-selected-feature">---</div>
     <div class="title">スタイル設定</div>
-    <div id="optmap-selected-style">---</div>
+    <div id="rightmap-selected-style">---</div>
   </div>
   <div id="title-A"><div class="map-title">(a)</div></div>
   <div id="title-B"><div class="map-title">(b)</div></div>
@@ -118,6 +148,15 @@ body { margin:0; padding:0; }
     <div class="button" onclick="showCollisionBoxes()">文字領域</div>
     <div class="button" onclick="setDebugStyle()">簡易スタイル</div>
     <div class="button" onclick="setNormalStyle()">サンプルスタイル</div>
+    <div class="button" onclick="openSourceLayerSelectPanel()">ソースレイヤ毎</div>
+  </div>
+  <div id="source-layer-select-panel" style="display:none;">
+    <div id="leftmap-column"></div>
+    <div id="rightmap-column"></div>
+    <div id="apply-button-area">
+      <div class="button" onclick="setSeparatedStyle()">適用</div>
+      <div class="button" onclick="closeSourceLayerSelectPanel()">そのまま閉じる</div>
+    </div>
   </div>
 </div>
 
@@ -130,8 +169,8 @@ body { margin:0; padding:0; }
 /*************************************************/
 /* Mapbox 関係設定                               */
 /*************************************************/
-const map = new mapboxgl.Map({
-  container: 'map', // container id
+const leftmap = new mapboxgl.Map({
+  container: 'leftmap', // container id
   hash: true, //add #position on URL
   style: 'https://gsi-cyberjapan.github.io/gsivectortile-mapbox-gl-js/std_vertical.json', // stylesheet location
   center: [139.7, 35.7], // starting position [lng, lat]
@@ -142,11 +181,11 @@ const map = new mapboxgl.Map({
 
 
 //map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
-map.addControl(new mapboxgl.ScaleControl() );
+leftmap.addControl(new mapboxgl.ScaleControl() );
 
 
-const optmap = new mapboxgl.Map({
-  container: 'optmap', // container id
+const rightmap = new mapboxgl.Map({
+  container: 'rightmap', // container id
   hash: true, //add #position on URL
   style: 'https://gsi-cyberjapan.github.io/optimal_bvmap/style/std.json', // stylesheet location
   center: [139.7, 35.7], // starting position [lng, lat]
@@ -155,7 +194,7 @@ const optmap = new mapboxgl.Map({
   localIdeographFontFamily: ['MS Gothic', 'Hiragino Kaku Gothic Pro', 'sans-serif']
 });
 
-optmap.addControl(new mapboxgl.ScaleControl() );
+rightmap.addControl(new mapboxgl.ScaleControl() );
 
 
 /*************************************************/
@@ -163,13 +202,13 @@ optmap.addControl(new mapboxgl.ScaleControl() );
 /*************************************************/
 
 const showTileBoundaries = () => {
-  map.showTileBoundaries = !map.showTileBoundaries;
-  optmap.showTileBoundaries = !optmap.showTileBoundaries;
+  leftmap.showTileBoundaries = !leftmap.showTileBoundaries;
+  rightmap.showTileBoundaries = !rightmap.showTileBoundaries;
 }
 
 const showCollisionBoxes = () => {
-  map.showCollisionBoxes = !map.showCollisionBoxes;
-  optmap.showCollisionBoxes = !optmap.showCollisionBoxes;
+  leftmap.showCollisionBoxes = !leftmap.showCollisionBoxes;
+  rightmap.showCollisionBoxes = !rightmap.showCollisionBoxes;
 }
 
 /*************************************************/
@@ -177,26 +216,26 @@ const showCollisionBoxes = () => {
 /*************************************************/
 let activeMap;
 
-map.on('mouseover', () => {
-  activeMap = "map";
-  console.log("map: active");
+leftmap.on('mouseover', () => {
+  activeMap = "leftmap";
+  console.log("leftmap: active");
 });
 
-optmap.on('mouseover', () => {
-  activeMap = "optmap";
-  console.log("optmap: active");
+rightmap.on('mouseover', () => {
+  activeMap = "rightmap";
+  console.log("rightmap: active");
 });
 
 
-map.on('move', () => {
-  if(activeMap == "map"){
-    synchroMaps(map, optmap);
+leftmap.on('move', () => {
+  if(activeMap == "leftmap"){
+    synchroMaps(leftmap, rightmap);
   }
 });
 
-optmap.on('move', () => {
-  if(activeMap == "optmap"){
-    synchroMaps(optmap, map);
+rightmap.on('move', () => {
+  if(activeMap == "rightmap"){
+    synchroMaps(rightmap, leftmap);
   }
 });
 
@@ -222,14 +261,14 @@ synchroMaps = (fromMap, toMap) => {
 /*************************************************/
 
 //クリック時の挙動
-map.on("click", (e) => {
-  const geojson = getFeatureInfo(map, e);
-  highlightFeature(geojson, "map");
+leftmap.on("click", (e) => {
+  const geojson = getFeatureInfo(leftmap, e);
+  highlightFeature(geojson, "leftmap");
 });
 
-optmap.on("click", (e) => {
-  const geojson = getFeatureInfo(optmap, e);
-  highlightFeature(geojson, "optmap");
+rightmap.on("click", (e) => {
+  const geojson = getFeatureInfo(rightmap, e);
+  highlightFeature(geojson, "rightmap");
 });
 
 const formatJson = (obj) => {
@@ -304,7 +343,7 @@ const getFeatureInfo = (mymap, e) => {
   
   const mapContainer = mymap._container.id;
   
-  document.getElementById(`${mapContainer}-selected-feature`).innerHTML = "<code>" + formatJson(geojson.features[0].properties) + "</code>";
+  document.getElementById(`${mapContainer}-selected-feature`).innerHTML = "<code>" + geojson.features[0].geometry.type + "<br>" + formatJson(geojson.features[0].properties) + "</code>";
   document.getElementById(`${mapContainer}-selected-style`).innerHTML = "<code>" + formatJson(layerInfo) + "</code>";
   
   return geojson;
@@ -312,27 +351,27 @@ const getFeatureInfo = (mymap, e) => {
 }
 
 const highlightFeature = (geojson, mymapName) => {
-  map.getSource(`selected-feature-${mymapName}`).setData(geojson);
-  optmap.getSource(`selected-feature-${mymapName}`).setData(geojson);
+  leftmap.getSource(`selected-feature-${mymapName}`).setData(geojson);
+  rightmap.getSource(`selected-feature-${mymapName}`).setData(geojson);
 }
 
 
 //強調表示用のsourceとstyle layerを設定
-map.on("style.load", () => {
-  console.log("map: style.load event");
-  initialize(map);
+leftmap.on("style.load", () => {
+  console.log("leftmap: style.load event");
+  initialize(leftmap);
 });
 
-optmap.on("style.load", () => {
-  console.log("optmap: style.load event");
-  initialize(optmap);
+rightmap.on("style.load", () => {
+  console.log("rightmap: style.load event");
+  initialize(rightmap);
 });
 
 const initialize = (mymap) => {
   
   const set = [
-    {col: "#FF0000", id: "map"},
-    {col: "#00FFFF", id: "optmap"}
+    {col: "#FF0000", id: "leftmap"},
+    {col: "#00FFFF", id: "rightmap"}
   ];
   
   set.forEach( t => {
@@ -340,7 +379,7 @@ const initialize = (mymap) => {
     const col = t.col;
     const mapContainer = t.id;
     
-    if(map.getSource(`selected-point-feature-${mapContainer}`)) return;
+    if(mymap.getSource(`selected-point-feature-${mapContainer}`)) return;
     
     mymap.addSource(`selected-feature-${mapContainer}`, {
       type: "geojson",
@@ -460,33 +499,33 @@ const layerStyleTemp = (type) => {
 }
 
 
-const gsibvSourceLayerList = [
-  {'source-layer': "symbol", 'geometory-type': 'point'},
-  {'source-layer': "boundary", 'geometory-type': 'line'},
-  {'source-layer': "road", 'geometory-type': 'line'},
-  {'source-layer': "railway", 'geometory-type': 'line'},
-  {'source-layer': "searoute", 'geometory-type': 'line'},
-  {'source-layer': "coastline", 'geometory-type': 'line'},
-  {'source-layer': "river", 'geometory-type': 'line'},
-  {'source-layer': "lake", 'geometory-type': 'line'},
-  {'source-layer': "waterarea", 'geometory-type': 'fill'},
-  {'source-layer': "elevation", 'geometory-type': 'point'},
-  {'source-layer': "transp", 'geometory-type': 'point'},
-  {'source-layer': "contour", 'geometory-type': 'line' },
-  {'source-layer': "landforma", 'geometory-type': 'fill'},
-  {'source-layer': "structurea", 'geometory-type': 'fill'},
-  {'source-layer': "wstructurea", 'geometory-type': 'fill'},
-  {'source-layer': "wstructurea", 'geometory-type': 'line'},
-  {'source-layer': "building", 'geometory-type': 'fill'},
-  {'source-layer': "building", 'geometory-type': 'line'},
-  {'source-layer': "transl", 'geometory-type': 'line'},
-  {'source-layer': "structurel", 'geometory-type': 'line'},
-  {'source-layer': "landformp", 'geometory-type': 'point'},
-  {'source-layer': "landforml", 'geometory-type': 'line'},
-  {'source-layer': "label", 'geometory-type': 'point'}
+const leftSourceLayerList = [
+  {'source-layer': 'symbol', 'geometory-type': 'point'},
+  {'source-layer': 'boundary', 'geometory-type': 'line'},
+  {'source-layer': 'road', 'geometory-type': 'line'},
+  {'source-layer': 'railway', 'geometory-type': 'line'},
+  {'source-layer': 'searoute', 'geometory-type': 'line'},
+  {'source-layer': 'coastline', 'geometory-type': 'line'},
+  {'source-layer': 'river', 'geometory-type': 'line'},
+  {'source-layer': 'lake', 'geometory-type': 'line'},
+  {'source-layer': 'waterarea', 'geometory-type': 'fill'},
+  {'source-layer': 'elevation', 'geometory-type': 'point'},
+  {'source-layer': 'transp', 'geometory-type': 'point'},
+  {'source-layer': 'contour', 'geometory-type': 'line' },
+  {'source-layer': 'landforma', 'geometory-type': 'fill'},
+  {'source-layer': 'structurea', 'geometory-type': 'fill'},
+  {'source-layer': 'wstructurea', 'geometory-type': 'fill'},
+  {'source-layer': 'wstructurea', 'geometory-type': 'line'},
+  {'source-layer': 'building', 'geometory-type': 'fill'},
+  {'source-layer': 'building', 'geometory-type': 'line'},
+  {'source-layer': 'transl', 'geometory-type': 'line'},
+  {'source-layer': 'structurel', 'geometory-type': 'line'},
+  {'source-layer': 'landformp', 'geometory-type': 'point'},
+  {'source-layer': 'landforml', 'geometory-type': 'line'},
+  {'source-layer': 'label', 'geometory-type': 'point'}
 ];
 
-const optbvSourceLayerList = [
+const rightSourceLayerList = [
   {'source-layer': 'AdmArea', 'geometory-type': 'fill'},
   {'source-layer': 'AdmBdry', 'geometory-type': 'line'},
   {'source-layer': 'RdEdg', 'geometory-type': 'line'},
@@ -563,19 +602,103 @@ const createDebugStyle = (mymap, url, sourceLayerList) => {
 
 const setDebugStyle = () => {
   
-  map.setStyle( createDebugStyle(
-    map, "https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/{z}/{x}/{y}.pbf", gsibvSourceLayerList
+  leftmap.setStyle( createDebugStyle(
+    leftmap, "https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/{z}/{x}/{y}.pbf", leftSourceLayerList
   ), {"diff": false});  
   
-  optmap.setStyle( createDebugStyle(
-    optmap, "https://cyberjapandata.gsi.go.jp/xyz/optimal_bvmap-v1/{z}/{x}/{y}.pbf", optbvSourceLayerList
+  rightmap.setStyle( createDebugStyle(
+    rightmap, "https://cyberjapandata.gsi.go.jp/xyz/optimal_bvmap-v1/{z}/{x}/{y}.pbf", rightSourceLayerList
   ), {"diff": false});
   
 }
 
 const setNormalStyle = () => {
-  optmap.setStyle("https://gsi-cyberjapan.github.io/optimal_bvmap/style/std.json", {"diff": false});
-  map.setStyle("https://gsi-cyberjapan.github.io/gsivectortile-mapbox-gl-js/std.json", {"diff": false});
+
+  rightmap.setStyle("https://gsi-cyberjapan.github.io/optimal_bvmap/style/std.json", {"diff": false});
+  leftmap.setStyle("https://gsi-cyberjapan.github.io/gsivectortile-mapbox-gl-js/std.json", {"diff": false});
+  
+}
+
+const setupCheckBox = (sl, container) => {
+  const formArea = document.getElementById(container);
+  const input = document.createElement("input");
+  input.setAttribute("name", container + "-inputs"); // "leftmap-column-inputs" or "rightmap-column-inputs"
+  input.setAttribute("type", "checkbox");
+  //input.setAttribute("checked", "");
+  input.setAttribute("value", sl);
+  formArea.appendChild(input);
+  
+  const title = document.createElement("span");
+  title.innerText = sl;;
+  formArea.appendChild(title);
+  
+  const br = document.createElement("br");
+  formArea.appendChild(br);
+}
+
+leftAddedList = [];
+leftSourceLayerList.forEach( a => {
+  const sl = a["source-layer"];
+  if(leftAddedList.includes(sl)) return;
+  setupCheckBox(sl, "leftmap-column");
+  leftAddedList.push(sl);
+});
+
+rightAddedList = [];
+rightSourceLayerList.forEach( a => {
+  const sl = a["source-layer"];
+  if(rightAddedList.includes(sl)) return;
+  setupCheckBox(sl, "rightmap-column");
+  rightAddedList.push(sl);
+});
+
+const createSourceLayerList = (sourceLayerNameList) => {
+  const res = [];
+  sourceLayerNameList.forEach( nm => {
+    res.push({'source-layer': nm, 'geometory-type': 'point'});
+    res.push({'source-layer': nm, 'geometory-type': 'line'});
+    res.push({'source-layer': nm, 'geometory-type': 'fill'});
+  });
+  return res;
+}
+
+const openSourceLayerSelectPanel = () => {
+  const e = document.getElementById("source-layer-select-panel");
+  e.style.display = "grid";
+}
+
+const closeSourceLayerSelectPanel = () => {
+  const e = document.getElementById("source-layer-select-panel");
+  e.style.display = "none";
+}
+
+const setSeparatedStyle = () => {
+  //leftmap
+  const leftCheckList = document.getElementsByName("leftmap-column-inputs");
+  const leftCheckedList = [];
+  leftCheckList.forEach( box => {
+    if(box.checked) leftCheckedList.push(box.value);
+  });
+  const leftSelectedSourceLayerList = createSourceLayerList(leftCheckedList);
+  console.log(leftSelectedSourceLayerList);
+  leftmap.setStyle( createDebugStyle(
+    leftmap, "https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/{z}/{x}/{y}.pbf", leftSelectedSourceLayerList
+  ), {"diff": false});
+  
+  //rightmap
+  const rightCheckList = document.getElementsByName("rightmap-column-inputs");
+  const rightCheckedList = [];
+  rightCheckList.forEach( box => {
+    if(box.checked) rightCheckedList.push(box.value);
+  });
+  const rightSelectedSourceLayerList = createSourceLayerList(rightCheckedList);
+  console.log(rightSelectedSourceLayerList);
+  rightmap.setStyle( createDebugStyle(
+    rightmap, "https://cyberjapandata.gsi.go.jp/xyz/optimal_bvmap-v1/{z}/{x}/{y}.pbf", rightSelectedSourceLayerList
+  ), {"diff": false});
+  
+  //close panel
+  closeSourceLayerSelectPanel();
 }
 
 </script>
