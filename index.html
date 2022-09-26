@@ -126,16 +126,16 @@ body { margin:0; padding:0; }
 </head>
 <body>
 
-<div id='wrap'>
-  <div id='leftmap'></div>
-  <div id='rightmap'></div>
-  <div id='leftmap-data-panel'>
+<div id="wrap">
+  <div id="leftmap"></div>
+  <div id="rightmap"></div>
+  <div id="leftmap-data-panel">
     <div class="title">属性値</div>
     <div id="leftmap-selected-feature">---</div>
     <div class="title">スタイル設定</div>
     <div id="leftmap-selected-style">---</div>
   </div>  
-  <div id='rightmap-data-panel'>
+  <div id="rightmap-data-panel">
     <div class="title">属性値</div>
     <div id="rightmap-selected-feature">---</div>
     <div class="title">スタイル設定</div>
@@ -160,8 +160,8 @@ body { margin:0; padding:0; }
   </div>
 </div>
 
-<div id='overlay'></div>
-<div id='menu'></div>
+<div id="overlay"></div>
+<div id="menu"></div>
 
 <script>
 
@@ -515,9 +515,9 @@ const leftSourceLayerList = [
   {'source-layer': 'landforma', 'geometory-type': 'fill'},
   {'source-layer': 'structurea', 'geometory-type': 'fill'},
   {'source-layer': 'wstructurea', 'geometory-type': 'fill'},
-  {'source-layer': 'wstructurea', 'geometory-type': 'line'},
+//  {'source-layer': 'wstructurea', 'geometory-type': 'line'},
   {'source-layer': 'building', 'geometory-type': 'fill'},
-  {'source-layer': 'building', 'geometory-type': 'line'},
+//  {'source-layer': 'building', 'geometory-type': 'line'},
   {'source-layer': 'transl', 'geometory-type': 'line'},
   {'source-layer': 'structurel', 'geometory-type': 'line'},
   {'source-layer': 'landformp', 'geometory-type': 'point'},
@@ -543,7 +543,7 @@ const rightSourceLayerList = [
   {'source-layer': 'WStrL', 'geometory-type': 'line'},
   {'source-layer': 'WRltLine', 'geometory-type': 'line'},
   {'source-layer': 'SpcfArea', 'geometory-type': 'fill'},
-  {'source-layer': 'SpcfArea', 'geometory-type': 'line'},
+//  {'source-layer': 'SpcfArea', 'geometory-type': 'line'},
   {'source-layer': 'Cntr', 'geometory-type': 'line'},
   {'source-layer': 'Isbt', 'geometory-type': 'line'},
   {'source-layer': 'TpgphArea', 'geometory-type': 'fill'},
@@ -551,7 +551,7 @@ const rightSourceLayerList = [
   {'source-layer': 'RailCL', 'geometory-type': 'line'},
   {'source-layer': 'PwrTrnsmL', 'geometory-type': 'line'},
   
-  {'source-layer': 'Anno', 'geometory-type': 'point'},
+//  {'source-layer': 'Anno', 'geometory-type': 'point'},
   {'source-layer': 'Anno', 'geometory-type': 'line'},
 ];
 
@@ -585,14 +585,15 @@ const createDebugStyle = (mymap, url, sourceLayerList) => {
   
   sourceLayerList.forEach( info => {
     
-    const gt = info["geometory-type"];
+    //const gt = info["geometory-type"];
     const sl = info["source-layer"];
     
-    const layer = layerStyleTemp(gt);
-    layer.id = "layer-" + Math.random() + Date.now();
-    layer["source-layer"] = info["source-layer"];
-    
-    debugStyle.layers.push(layer);
+    ["fill", "line", "point"].forEach( gt => {
+      const layer = layerStyleTemp(gt);
+      layer.id = "layer-" + Math.random() + Date.now();
+      layer["source-layer"] = info["source-layer"];
+      debugStyle.layers.push(layer);
+    });
     
   });
   
@@ -655,9 +656,7 @@ rightSourceLayerList.forEach( a => {
 const createSourceLayerList = (sourceLayerNameList) => {
   const res = [];
   sourceLayerNameList.forEach( nm => {
-    res.push({'source-layer': nm, 'geometory-type': 'point'});
-    res.push({'source-layer': nm, 'geometory-type': 'line'});
-    res.push({'source-layer': nm, 'geometory-type': 'fill'});
+    res.push({'source-layer': nm, 'geometory-type': ''});
   });
   return res;
 }
