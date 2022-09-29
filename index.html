@@ -60,14 +60,16 @@ body { margin:0; padding:0; }
 }
 
 #source-layer-select-panel {
-  display: grid;
-  grid-template: 1fr 48px / 1fr 1fr;
+  display: none;
+  grid-template: 1fr 48px 48px / 1fr 1fr;
   grid-column: 1 / 3;
-  grid-row: 2 / 3;
+  grid-row: 1 / 3;
   margin: 24px;
+  padding: 8px;
   background-color: #EEEEEE;
   border: solid #FFFFFF 4px;
   border-radius: 8px;
+  z-index: 19999;
 }
 
 
@@ -83,9 +85,19 @@ body { margin:0; padding:0; }
   overflow: auto;
 }
 
+#leftmap-check-all-button {
+  grid-column: 1 / 2;
+  grid-row: 2 / 3;
+}
+
+#rightmap-check-all-button{
+  grid-column: 2 / 3;
+  grid-row: 2 / 3;
+}
+
 #apply-button-area {
   grid-column: 1 / 3;
-  grid-row: 2 / 3;
+  grid-row: 3 / 4;
   text-align: center;
 }
 
@@ -153,6 +165,12 @@ body { margin:0; padding:0; }
   <div id="source-layer-select-panel" style="display:none;">
     <div id="leftmap-column"></div>
     <div id="rightmap-column"></div>
+    <div id="leftmap-check-all-button">
+      <div class="button" onclick="onoffAllChecksLeft()">全選択/全解除</div>
+    </div>
+    <div id="rightmap-check-all-button">
+      <div class="button" onclick="onoffAllChecksRight()">全選択/全解除</div>
+    </div>
     <div id="apply-button-area">
       <div class="button" onclick="setSeparatedStyle()">適用</div>
       <div class="button" onclick="closeSourceLayerSelectPanel()">そのまま閉じる</div>
@@ -700,6 +718,24 @@ const setSeparatedStyle = () => {
   closeSourceLayerSelectPanel();
 }
 
+let onoffAllChecksLeftFlag = false;
+const onoffAllChecksLeft = () => {
+  const checkList = document.getElementsByName("leftmap-column-inputs");
+  checkList.forEach( box => {
+    box.checked = !onoffAllChecksLeftFlag
+  });
+  onoffAllChecksLeftFlag = !onoffAllChecksLeftFlag;
+}
+
+
+let onoffAllChecksRightFlag = false;
+const onoffAllChecksRight = () => {
+  const checkList = document.getElementsByName("rightmap-column-inputs");
+  checkList.forEach( box => {
+    box.checked = !onoffAllChecksRightFlag
+  });
+  onoffAllChecksRightFlag = !onoffAllChecksRightFlag;
+}
 </script>
  
 </body>
