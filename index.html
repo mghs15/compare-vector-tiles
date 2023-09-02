@@ -4,8 +4,9 @@
 <meta charset='utf-8' />
 <title>compare vector tiles</title>
 <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
-<script src='https://api.tiles.mapbox.com/mapbox-gl-js/v1.13.2/mapbox-gl.js'></script>
-<link href='https://api.tiles.mapbox.com/mapbox-gl-js/v1.13.2/mapbox-gl.css' rel='stylesheet' />
+<script src='https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js'></script>
+<link href='https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css' rel='stylesheet' />
+<script src='https://unpkg.com/pmtiles@2.5.0/dist/index.js'></script>
 <style>
 body { margin:0; padding:0; }
 
@@ -185,9 +186,13 @@ body { margin:0; padding:0; }
 
 
 /*************************************************/
-/* Mapbox 関係設定                               */
+/*MapLibre+PMTiles 関係設定                      */
 /*************************************************/
-const leftmap = new mapboxgl.Map({
+
+let protocol = new pmtiles.Protocol();
+maplibregl.addProtocol("pmtiles", protocol.tile);
+
+const leftmap = new maplibregl.Map({
   container: 'leftmap', // container id
   hash: true, //add #position on URL
   style: 'https://gsi-cyberjapan.github.io/gsivectortile-mapbox-gl-js/std_vertical.json', // stylesheet location
@@ -198,11 +203,11 @@ const leftmap = new mapboxgl.Map({
 });
 
 
-//map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
-leftmap.addControl(new mapboxgl.ScaleControl() );
+//map.addControl(new maplibregl.NavigationControl(), 'bottom-right');
+leftmap.addControl(new maplibregl.ScaleControl() );
 
 
-const rightmap = new mapboxgl.Map({
+const rightmap = new maplibregl.Map({
   container: 'rightmap', // container id
   hash: true, //add #position on URL
   style: 'https://gsi-cyberjapan.github.io/optimal_bvmap/style/std.json', // stylesheet location
@@ -212,7 +217,7 @@ const rightmap = new mapboxgl.Map({
   localIdeographFontFamily: ['MS Gothic', 'Hiragino Kaku Gothic Pro', 'sans-serif']
 });
 
-rightmap.addControl(new mapboxgl.ScaleControl() );
+rightmap.addControl(new maplibregl.ScaleControl() );
 
 
 /*************************************************/
