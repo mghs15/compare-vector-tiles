@@ -184,6 +184,68 @@ body { margin:0; padding:0; }
 
 <script>
 
+const leftMapUrl = "https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/{z}/{x}/{y}.pbf";
+const rightMapUrl = "pmtiles://https://cyberjapandata.gsi.go.jp/xyz/optimal_bvmap-v1/optimal_bvmap-v1.pmtiles/{z}/{x}/{y}";
+
+const leftMapNormalStyle = "https://gsi-cyberjapan.github.io/gsivectortile-mapbox-gl-js/std.json";
+const rightMapNormalStyle = "https://gsi-cyberjapan.github.io/optimal_bvmap/style/std.json";
+
+const leftSourceLayerList = [
+  {'source-layer': 'symbol', 'geometory-type': 'point'},
+  {'source-layer': 'boundary', 'geometory-type': 'line'},
+  {'source-layer': 'road', 'geometory-type': 'line'},
+  {'source-layer': 'railway', 'geometory-type': 'line'},
+  {'source-layer': 'searoute', 'geometory-type': 'line'},
+  {'source-layer': 'coastline', 'geometory-type': 'line'},
+  {'source-layer': 'river', 'geometory-type': 'line'},
+  {'source-layer': 'lake', 'geometory-type': 'line'},
+  {'source-layer': 'waterarea', 'geometory-type': 'fill'},
+  {'source-layer': 'elevation', 'geometory-type': 'point'},
+  {'source-layer': 'transp', 'geometory-type': 'point'},
+  {'source-layer': 'contour', 'geometory-type': 'line' },
+  {'source-layer': 'landforma', 'geometory-type': 'fill'},
+  {'source-layer': 'structurea', 'geometory-type': 'fill'},
+  {'source-layer': 'wstructurea', 'geometory-type': 'fill'},
+//  {'source-layer': 'wstructurea', 'geometory-type': 'line'},
+  {'source-layer': 'building', 'geometory-type': 'fill'},
+//  {'source-layer': 'building', 'geometory-type': 'line'},
+  {'source-layer': 'transl', 'geometory-type': 'line'},
+  {'source-layer': 'structurel', 'geometory-type': 'line'},
+  {'source-layer': 'landformp', 'geometory-type': 'point'},
+  {'source-layer': 'landforml', 'geometory-type': 'line'},
+  {'source-layer': 'label', 'geometory-type': 'point'}
+];
+
+const rightSourceLayerList = [
+  {'source-layer': 'AdmArea', 'geometory-type': 'fill'},
+  {'source-layer': 'AdmBdry', 'geometory-type': 'line'},
+  {'source-layer': 'RdEdg', 'geometory-type': 'line'},
+  {'source-layer': 'RdCompt', 'geometory-type': 'line'},
+  {'source-layer': 'RdCL', 'geometory-type': 'line'},
+  {'source-layer': 'RailTrCL', 'geometory-type': 'line'},
+  {'source-layer': 'BldA', 'geometory-type': 'fill'},
+  {'source-layer': 'StrctLine', 'geometory-type': 'line'},
+  {'source-layer': 'StrctArea', 'geometory-type': 'fill'},
+  {'source-layer': 'WA', 'geometory-type': 'fill'},
+  {'source-layer': 'Cstline', 'geometory-type': 'line'},
+  {'source-layer': 'WL', 'geometory-type': 'line'},
+  {'source-layer': 'RvrCL', 'geometory-type': 'line'},
+  {'source-layer': 'WStrA', 'geometory-type': 'fill'},
+  {'source-layer': 'WStrL', 'geometory-type': 'line'},
+  {'source-layer': 'WRltLine', 'geometory-type': 'line'},
+  {'source-layer': 'SpcfArea', 'geometory-type': 'fill'},
+//  {'source-layer': 'SpcfArea', 'geometory-type': 'line'},
+  {'source-layer': 'Cntr', 'geometory-type': 'line'},
+  {'source-layer': 'Isbt', 'geometory-type': 'line'},
+  {'source-layer': 'TpgphArea', 'geometory-type': 'fill'},
+  {'source-layer': 'TpgphLine', 'geometory-type': 'line'},
+  {'source-layer': 'RailCL', 'geometory-type': 'line'},
+  {'source-layer': 'PwrTrnsmL', 'geometory-type': 'line'},
+  
+//  {'source-layer': 'Anno', 'geometory-type': 'point'},
+  {'source-layer': 'Anno', 'geometory-type': 'line'},
+];
+
 
 /*************************************************/
 /*MapLibre+PMTiles 関係設定                      */
@@ -195,7 +257,7 @@ maplibregl.addProtocol("pmtiles", protocol.tile);
 const leftmap = new maplibregl.Map({
   container: 'leftmap', // container id
   hash: true, //add #position on URL
-  style: 'https://gsi-cyberjapan.github.io/gsivectortile-mapbox-gl-js/std_vertical.json', // stylesheet location
+  style: leftMapNormalStyle, // stylesheet location
   center: [139.7, 35.7], // starting position [lng, lat]
   zoom: 10, // starting zoom
   maxZoom: 17.99,
@@ -210,7 +272,7 @@ leftmap.addControl(new maplibregl.ScaleControl() );
 const rightmap = new maplibregl.Map({
   container: 'rightmap', // container id
   hash: true, //add #position on URL
-  style: 'https://gsi-cyberjapan.github.io/optimal_bvmap/style/std.json', // stylesheet location
+  style: rightMapUrl, // stylesheet location
   center: [139.7, 35.7], // starting position [lng, lat]
   zoom: 10, // starting zoom
   maxZoom: 17.99,
@@ -520,68 +582,6 @@ const layerStyleTemp = (type) => {
   return ob[type];
   
 }
-
-const leftMapUrl = "https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/{z}/{x}/{y}.pbf";
-const rightMapUrl = "pmtiles://https://cyberjapandata.gsi.go.jp/xyz/optimal_bvmap-v1/optimal_bvmap-v1.pmtiles/{z}/{x}/{y}";
-
-const leftMapNormalStyle = "https://gsi-cyberjapan.github.io/gsivectortile-mapbox-gl-js/std.json";
-const rightMapNormalStyle = "https://gsi-cyberjapan.github.io/optimal_bvmap/style/std.json";
-
-const leftSourceLayerList = [
-  {'source-layer': 'symbol', 'geometory-type': 'point'},
-  {'source-layer': 'boundary', 'geometory-type': 'line'},
-  {'source-layer': 'road', 'geometory-type': 'line'},
-  {'source-layer': 'railway', 'geometory-type': 'line'},
-  {'source-layer': 'searoute', 'geometory-type': 'line'},
-  {'source-layer': 'coastline', 'geometory-type': 'line'},
-  {'source-layer': 'river', 'geometory-type': 'line'},
-  {'source-layer': 'lake', 'geometory-type': 'line'},
-  {'source-layer': 'waterarea', 'geometory-type': 'fill'},
-  {'source-layer': 'elevation', 'geometory-type': 'point'},
-  {'source-layer': 'transp', 'geometory-type': 'point'},
-  {'source-layer': 'contour', 'geometory-type': 'line' },
-  {'source-layer': 'landforma', 'geometory-type': 'fill'},
-  {'source-layer': 'structurea', 'geometory-type': 'fill'},
-  {'source-layer': 'wstructurea', 'geometory-type': 'fill'},
-//  {'source-layer': 'wstructurea', 'geometory-type': 'line'},
-  {'source-layer': 'building', 'geometory-type': 'fill'},
-//  {'source-layer': 'building', 'geometory-type': 'line'},
-  {'source-layer': 'transl', 'geometory-type': 'line'},
-  {'source-layer': 'structurel', 'geometory-type': 'line'},
-  {'source-layer': 'landformp', 'geometory-type': 'point'},
-  {'source-layer': 'landforml', 'geometory-type': 'line'},
-  {'source-layer': 'label', 'geometory-type': 'point'}
-];
-
-const rightSourceLayerList = [
-  {'source-layer': 'AdmArea', 'geometory-type': 'fill'},
-  {'source-layer': 'AdmBdry', 'geometory-type': 'line'},
-  {'source-layer': 'RdEdg', 'geometory-type': 'line'},
-  {'source-layer': 'RdCompt', 'geometory-type': 'line'},
-  {'source-layer': 'RdCL', 'geometory-type': 'line'},
-  {'source-layer': 'RailTrCL', 'geometory-type': 'line'},
-  {'source-layer': 'BldA', 'geometory-type': 'fill'},
-  {'source-layer': 'StrctLine', 'geometory-type': 'line'},
-  {'source-layer': 'StrctArea', 'geometory-type': 'fill'},
-  {'source-layer': 'WA', 'geometory-type': 'fill'},
-  {'source-layer': 'Cstline', 'geometory-type': 'line'},
-  {'source-layer': 'WL', 'geometory-type': 'line'},
-  {'source-layer': 'RvrCL', 'geometory-type': 'line'},
-  {'source-layer': 'WStrA', 'geometory-type': 'fill'},
-  {'source-layer': 'WStrL', 'geometory-type': 'line'},
-  {'source-layer': 'WRltLine', 'geometory-type': 'line'},
-  {'source-layer': 'SpcfArea', 'geometory-type': 'fill'},
-//  {'source-layer': 'SpcfArea', 'geometory-type': 'line'},
-  {'source-layer': 'Cntr', 'geometory-type': 'line'},
-  {'source-layer': 'Isbt', 'geometory-type': 'line'},
-  {'source-layer': 'TpgphArea', 'geometory-type': 'fill'},
-  {'source-layer': 'TpgphLine', 'geometory-type': 'line'},
-  {'source-layer': 'RailCL', 'geometory-type': 'line'},
-  {'source-layer': 'PwrTrnsmL', 'geometory-type': 'line'},
-  
-//  {'source-layer': 'Anno', 'geometory-type': 'point'},
-  {'source-layer': 'Anno', 'geometory-type': 'line'},
-];
 
 
 const createDebugStyle = (mymap, url, sourceLayerList) => {
