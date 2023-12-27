@@ -521,6 +521,11 @@ const layerStyleTemp = (type) => {
   
 }
 
+const leftMapUrl = "https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/{z}/{x}/{y}.pbf";
+const rightMapUrl = "pmtiles://https://cyberjapandata.gsi.go.jp/xyz/optimal_bvmap-v1/optimal_bvmap-v1.pmtiles/{z}/{x}/{y}";
+
+const leftMapNormalStyle = "https://gsi-cyberjapan.github.io/gsivectortile-mapbox-gl-js/std.json";
+const rightMapNormalStyle = "https://gsi-cyberjapan.github.io/optimal_bvmap/style/std.json";
 
 const leftSourceLayerList = [
   {'source-layer': 'symbol', 'geometory-type': 'point'},
@@ -627,19 +632,19 @@ const createDebugStyle = (mymap, url, sourceLayerList) => {
 const setDebugStyle = () => {
   
   leftmap.setStyle( createDebugStyle(
-    leftmap, "https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/{z}/{x}/{y}.pbf", leftSourceLayerList
+    leftmap, leftMapUrl, leftSourceLayerList
   ), {"diff": false});  
   
   rightmap.setStyle( createDebugStyle(
-    rightmap, "https://cyberjapandata.gsi.go.jp/xyz/optimal_bvmap-v1/{z}/{x}/{y}.pbf", rightSourceLayerList
+    rightmap, rightMapUrl, rightSourceLayerList
   ), {"diff": false});
   
 }
 
 const setNormalStyle = () => {
 
-  rightmap.setStyle("https://gsi-cyberjapan.github.io/optimal_bvmap/style/std.json", {"diff": false});
-  leftmap.setStyle("https://gsi-cyberjapan.github.io/gsivectortile-mapbox-gl-js/std.json", {"diff": false});
+  rightmap.setStyle(rightMapNormalStyle, {"diff": false});
+  leftmap.setStyle(leftMapNormalStyle, {"diff": false});
   
 }
 
@@ -704,7 +709,7 @@ const setSeparatedStyle = () => {
   const leftSelectedSourceLayerList = createSourceLayerList(leftCheckedList);
   console.log(leftSelectedSourceLayerList);
   leftmap.setStyle( createDebugStyle(
-    leftmap, "https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/{z}/{x}/{y}.pbf", leftSelectedSourceLayerList
+    leftmap, leftMapUrl, leftSelectedSourceLayerList
   ), {"diff": false});
   
   //rightmap
@@ -716,7 +721,7 @@ const setSeparatedStyle = () => {
   const rightSelectedSourceLayerList = createSourceLayerList(rightCheckedList);
   console.log(rightSelectedSourceLayerList);
   rightmap.setStyle( createDebugStyle(
-    rightmap, "https://cyberjapandata.gsi.go.jp/xyz/optimal_bvmap-v1/{z}/{x}/{y}.pbf", rightSelectedSourceLayerList
+    rightmap, rightMapUrl, rightSelectedSourceLayerList
   ), {"diff": false});
   
   //close panel
